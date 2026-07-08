@@ -35,5 +35,15 @@ export default async function PlaybooksPage() {
     )
   }
 
-  return <PlaybooksView playbooks={(playbooks || []) as Playbook[]} />
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-lg font-semibold text-white">Playbooks</h1>
+        <p className="mt-1 text-sm text-zinc-400">
+          Guides de montage par cible et avatar. Crée des fiches avec checklists, vidéos Loom et exemples d&apos;ads.
+        </p>
+      </div>
+      <PlaybooksView playbooks={(playbooks || []) as Playbook[]} />
+    </div>
+  )
 }

@@ -421,9 +421,10 @@ Ces connecteurs nécessitent des accès que nous n'avons pas encore. L'architect
 
 ## 7. Décisions clés
 
-- **Supabase client en lecture seule** : jamais de modification des tables `ogwqvijwbzzzmswgifvx`.
-- **Supabase template pour les écritures** : statuts WhatsApp, `observatoire_messages`, `knowledge_entries`, tables Instagram, futures tables Frame.io/Banque.
-- **Observatoire WhatsApp basculé sur `observatoire_messages`** : cette table du template deviendra la source unique des messages WhatsApp classés par n8n quand le Supabase client ne sera plus accessible.
+- **Supabase client en lecture seule** : jamais de modification des tables `ogwqvijwbzzzmswgifvx`. ✅ Vérifié et appliqué.
+- **Supabase template pour les écritures** : statuts WhatsApp, `observatoire_messages`, `knowledge_entries`, tables Instagram, `whatsapp_blacklist`.
+- **Observatoire WhatsApp basculé sur `observatoire_messages`** : cette table du template deviendra la source unique des messages WhatsApp classés par n8n.
+- **WF - WhatsApp Ingest redirigé** : n8n envoie maintenant vers `/api/observatoire/ingest` (template) au lieu de `/api/whatsapp/ingest` (client).
 - **Mock local avec hash stable** : éviter les erreurs d'hydratation sur les modules sans données réelles.
 - **WhatsApp reste dans l'Observatoire** : les transcripts ne sont pas des entrées du Cerveau EWA (règle métier).
 - **Connexions bancaires simulées** : clés API saisies dans Paramètres mais non exploitées en attendant les vrais credentials.
@@ -451,10 +452,13 @@ Ces connecteurs nécessitent des accès que nous n'avons pas encore. L'architect
 3. ✅ Implémenter l'étape 2 : créer/documenter les workflows n8n fondamentaux.
 4. ✅ **Implémenter l'étape 3** : pipeline Instagram / Audit avec Apify + OpenRouter.
 5. ✅ **Implémenter l'étape 4** : IA / Chat Cerveau EWA avec RAG.
-6. ✅ **WF - WhatsApp Ingest** importé et actif sur l'instance n8n cloud.
-7. ✅ **wf-knowledge-ingest** et **wf-instagram-audit** importés (bloqués : app non déployée).
+6. ✅ **WF - WhatsApp Ingest** importé et actif sur l'instance n8n cloud, redirigé vers `/api/observatoire/ingest`.
+7. ✅ **wf-knowledge-ingest** et **wf-instagram-audit** importés (bloqués : credentials Apify/OpenRouter à configurer dans n8n).
 8. ✅ Workflows Sync supprimés (non pertinents — données déjà en base).
-9. **Déployer l'app** et mettre à jour l'URL dans les workflows n8n.
+9. ✅ **Déploiement Vercel** : https://template-ewa-app.vercel.app
+10. ✅ **Audit écritures Supabase client** : plus aucune écriture — lecture seule respectée.
+11. ✅ **Credentials n8n configurés** (Apify + OpenRouter).
+12. ✅ **Messages WAHA dans l'Observatoire** — flux opérationnel.
 
 ---
 

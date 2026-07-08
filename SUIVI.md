@@ -152,11 +152,12 @@ Le Supabase client (`ogwqvijwbzzzmswgifvx`) est utilisé en lecture seule via `s
 
 - Utilisation de `SUPABASE_SERVICE_ROLE_KEY` pour lire les tables avec RLS restrictives.
 - Notre Supabase `yfeutiagwgbrsbncmixx` est utilisé comme base template autonome pour `knowledge_entries` et les tables propres à l'app.
-- Le Supabase client `ogwqvijwbzzzmswgifvx` reste en lecture seule pour les données opérationnelles (clients, monteurs, WhatsApp, playbooks).
-- `whatsapp_blacklist` gérée côté app sans toucher au Supabase client.
+- Le Supabase client `ogwqvijwbzzzmswgifvx` reste en **lecture seule** pour les données opérationnelles (clients, monteurs, WhatsApp, playbooks).
+- `whatsapp_blacklist` gérée côté app via le Supabase template (plus d'écriture sur le client).
 - Modules sans données réelles entièrement mockés côté template.
 - CA client, stats équipe, financements, données bancaires : tous mockés avec hash stable pour éviter les erreurs d'hydratation.
 - Les connexions bancaires sont simulées localement. En production, les clés API seraient chiffrées côté serveur.
+- **WF - WhatsApp Ingest** redirigé vers `/api/observatoire/ingest` (Supabase template) au lieu de `/api/whatsapp/ingest` (Supabase client).
 
 ## Fichiers importants
 
@@ -196,11 +197,16 @@ Le Supabase client (`ogwqvijwbzzzmswgifvx`) est utilisé en lecture seule via `s
 5. ✅ Paramètres IA (provider/modèle)
 
 ### Automatisations & connecteurs
-6. ✅ **Connecteur n8n** : **WF - WhatsApp Ingest** actif sur `n8nv3.iapourasso.com`. **wf-knowledge-ingest** et **wf-instagram-audit** importés (bloqués : app non déployée). Workflows Sync supprimés (non pertinents — données déjà en base).
+6. ✅ **Connecteur n8n** : **WF - WhatsApp Ingest** actif sur `n8nv3.iapourasso.com`, redirigé vers `/api/observatoire/ingest`. **wf-knowledge-ingest** et **wf-instagram-audit** importés (bloqués : credentials Apify/OpenRouter à configurer dans n8n). Workflows Sync supprimés (non pertinents).
 7. **Intégration Loom** : importer les 374 vidéos Loom réelles et leurs transcripts dans le Cerveau EWA. Bloqué : pas de clé API Loom.
 8. **Frame.io OAuth/API** : projets, assets, reviews, uploads. Bloqué : pas de token/abonnement.
 9. **Qonto API / agrégateur bancaire** : transactions, soldes, virements réels. Bloqué : pas de credentials.
 10. **WhatsApp transcripts** : exploiter les 153 transcripts vocaux existants dans l'Observatoire.
-11. **Déploiement** : déployer l'app Next.js (Vercel/Railway) et mettre à jour l'URL dans les workflows n8n.
+
+### Infrastructure
+11. ✅ **Déploiement Vercel** : https://template-ewa-app.vercel.app
+12. ✅ **Audit écritures Supabase client** : plus aucune écriture — lecture seule respectée.
+13. ✅ **Credentials n8n configurés** (Apify + OpenRouter) — `wf-instagram-audit` et `wf-knowledge-ingest` débloqués.
+14. ✅ **Messages WAHA dans l'Observatoire** — flux via `/api/observatoire/ingest` opérationnel.
 
 > Pour l'instant, les modules Banque et Analytics utilisent des données mockées. Les clés API sont saisies dans Paramètres > Connexions bancaires mais non exploitées. Les entrées Loom du Cerveau EWA sont mockées en attendant l'intégration réelle.

@@ -2,34 +2,29 @@
   "name": "WF - Knowledge Ingest",
   "nodes": [
     {
-      "id": "25111111-2222-3333-4444-555555555551",
+      "parameters": {},
+      "id": "be1f197e-0373-4688-9730-0c48c232d10d",
       "name": "Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
-      "position": [250, 300],
-      "parameters": {},
+      "position": [0, 0],
       "typeVersion": 1
     },
     {
-      "id": "25111111-2222-3333-4444-555555555552",
-      "name": "Read Playbooks from Supabase",
-      "type": "n8n-nodes-base.supabase",
-      "position": [500, 300],
       "parameters": {
         "operation": "getAll",
         "tableId": "playbooks",
-        "returnAll": true,
-        "fields": ""
+        "returnAll": true
       },
+      "id": "ffa1c5d6-aec2-4080-8cf2-ac908b54b77f",
+      "name": "Read Playbooks from Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "position": [256, 0],
+      "typeVersion": 1,
       "credentials": {
-        "supabaseApi": { "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID", "name": "Supabase Service Role - Client" }
-      },
-      "typeVersion": 1
+        "supabaseApi": { "id": "KB08fHAmzE3Mumwn", "name": "Supabase Yannstory" }
+      }
     },
     {
-      "id": "25111111-2222-3333-4444-555555555553",
-      "name": "Categorize with OpenRouter",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [750, 300],
       "parameters": {
         "method": "POST",
         "url": "https://openrouter.ai/api/v1/chat/completions",
@@ -51,28 +46,25 @@
         "options": {}
       },
       "credentials": {
-        "httpHeaderAuth": {
-          "id": "TODO_OPENROUTER_CREDENTIAL_ID",
-          "name": "OpenRouter API"
-        }
+        "httpHeaderAuth": { "id": "TODO_OPENROUTER_CREDENTIAL_ID", "name": "OpenRouter API" }
       },
+      "id": "43c8c838-8200-400d-b9a1-8f4208c29145",
+      "name": "Categorize with OpenRouter",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [512, 0],
       "typeVersion": 4.2
     },
     {
-      "id": "25111111-2222-3333-4444-555555555554",
-      "name": "Parse Categorization",
-      "type": "n8n-nodes-base.code",
-      "position": [1000, 300],
       "parameters": {
         "jsCode": "const content = $json.choices?.[0]?.message?.content || '{}';\nlet category = 'manual';\nlet subcategory = 'contenu';\ntry {\n  const parsed = JSON.parse(content);\n  category = parsed.category || 'manual';\n  subcategory = parsed.subcategory || 'contenu';\n} catch (e) {}\nconst items = $items('Read Playbooks from Supabase');\nconst idx = $execution?.itemIndex ?? 0;\nconst item = items[idx]?.json || items[0]?.json || {};\nreturn [{\n  json: {\n    title: item.title,\n    content: item.content,\n    category,\n    subcategory,\n    source: 'manual',\n    metadata: { origin: 'playbook', playbook_id: item.id },\n    original_id: item.id,\n    original_table: 'playbooks'\n  }\n}];"
       },
+      "id": "115dec8f-9360-4bde-9ad7-a943e3337f31",
+      "name": "Parse Categorization",
+      "type": "n8n-nodes-base.code",
+      "position": [752, 0],
       "typeVersion": 2
     },
     {
-      "id": "25111111-2222-3333-4444-555555555555",
-      "name": "POST /api/knowledge/ingest",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [1250, 300],
       "parameters": {
         "method": "POST",
         "url": "https://template-ewa-app.vercel.app/api/knowledge/ingest",
@@ -98,6 +90,10 @@
         },
         "options": {}
       },
+      "id": "7c4be2b0-98f6-4d84-87d0-a1d43dc1ecc1",
+      "name": "POST /api/knowledge/ingest",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1008, 0],
       "typeVersion": 4.2
     }
   ],
@@ -107,7 +103,9 @@
     "Categorize with OpenRouter": { "main": [[{"node": "Parse Categorization", "type": "main", "index": 0}]] },
     "Parse Categorization": { "main": [[{"node": "POST /api/knowledge/ingest", "type": "main", "index": 0}]] }
   },
-  "settings": { "executionOrder": "v1", "errorWorkflow": "" },
-  "staticData": null,
-  "tags": ["ewa", "knowledge", "ingest", "openrouter"]
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1a35879ae87e93b4eda7853fa43024346dc2571fbecb1bfaa0f41fed0645b29b"
+  }
 }
