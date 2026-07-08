@@ -10,7 +10,7 @@ const ingestSchema = z.object({
   category: z.string().min(1),
   subcategory: z.string().optional(),
   source: z.enum(["loom", "formation", "script", "manual", "whatsapp", "instagram_audit"]),
-  metadata: z.object({}).passthrough().optional(),
+  metadata: z.union([z.object({}).passthrough(), z.string()]).optional(),
   original_id: z.string().optional(),
   original_table: z.string().optional(),
 })
@@ -26,13 +26,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const parsed = ingestSchema.parse(body)
 
+    const metadata = typeof parsed.metadata === "string" ? JSON.parse(parsed.metadata) : (parsed.metadata || {})
+
     const entry = await createKnowledgeEntry({
       title: parsed.title,
       content: parsed.content,
       category: parsed.category,
       subcategory: parsed.subcategory,
       source: parsed.source as KnowledgeSource,
-      metadata: parsed.metadata || {},
+      metadata,
       original_id: parsed.original_id,
       original_table: parsed.original_table,
     })

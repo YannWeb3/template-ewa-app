@@ -39,7 +39,7 @@
         "bodyParameters": {
           "parameters": [
             { "name": "model", "value": "anthropic/claude-sonnet-4.5" },
-            { "name": "messages", "value": "={{ JSON.stringify([{role:'system', content:'Tu classifies un contenu EWA. Réponds uniquement en JSON avec category, subcategory (max 30 caractères, kebab-case).'}, {role:'user', content: 'Titre : ' + $json.title + '\\n' + $json.content}]) }}" },
+            { "name": "messages", "value": "={{ JSON.stringify([{role:'system', content:'Tu classifies un contenu EWA. Réponds UNIQUEMENT en JSON valide avec 2 clés: category et subcategory (max 30 caractères, kebab-case). Exemple: {\"category\":\"montage\",\"subcategory\":\"reels\"}. Pas de texte avant ou après le JSON.'}, {role:'user', content: 'Titre : ' + $json.title + '\\n' + $json.content}]) }}" },
             { "name": "response_format", "value": "json_object" }
           ]
         },
@@ -56,12 +56,12 @@
     },
     {
       "parameters": {
-        "jsCode": "const content = $json.choices?.[0]?.message?.content || '{}';\nlet category = 'manual';\nlet subcategory = 'contenu';\ntry {\n  const parsed = JSON.parse(content);\n  category = parsed.category || 'manual';\n  subcategory = parsed.subcategory || 'contenu';\n} catch (e) {}\nconst items = $items('Read Playbooks from Supabase');\nconst idx = $execution?.itemIndex ?? 0;\nconst item = items[idx]?.json || items[0]?.json || {};\nreturn [{\n  json: {\n    title: item.title,\n    content: item.content,\n    category,\n    subcategory,\n    source: 'manual',\n    metadata: { origin: 'playbook', playbook_id: item.id },\n    original_id: item.id,\n    original_table: 'playbooks'\n  }\n}];"
+        "jsCode": "// Support OpenAI/OpenRouter format AND Ollama format\nconst raw = $json.choices?.[0]?.message?.content || $json.text || $json.response || '{}';\nlet category = 'manual';\nlet subcategory = 'contenu';\n// Try to extract JSON from the response\nconst jsonMatch = raw.match(/\\{[\\s\\S]*\\}/);\nif (jsonMatch) {\n  try {\n    const parsed = JSON.parse(jsonMatch[0]);\n    category = parsed.category || 'manual';\n    subcategory = parsed.subcategory || 'contenu';\n  } catch (e) {}\n}\nconst items = $items('Read Playbooks from Supabase');\nconst idx = $execution?.itemIndex ?? 0;\nconst item = items[idx]?.json || items[0]?.json || {};\nreturn [{\n  json: {\n    title: item.title,\n    content: item.content,\n    category,\n    subcategory,\n    source: 'manual',\n    metadata: { origin: 'playbook', playbook_id: item.id },\n    original_id: item.id,\n    original_table: 'playbooks'\n  }\n}];"
       },
       "id": "115dec8f-9360-4bde-9ad7-a943e3337f31",
       "name": "Parse Categorization",
       "type": "n8n-nodes-base.code",
-      "position": [752, 0],
+      "position": [768, 0],
       "typeVersion": 2
     },
     {
@@ -93,7 +93,7 @@
       "id": "7c4be2b0-98f6-4d84-87d0-a1d43dc1ecc1",
       "name": "POST /api/knowledge/ingest",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [1008, 0],
+      "position": [1024, 0],
       "typeVersion": 4.2
     }
   ],
