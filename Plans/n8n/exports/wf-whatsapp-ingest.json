@@ -48,7 +48,7 @@
       "position": [750, 300],
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/whatsapp/ingest",
+        "url": "https://template-ewa-app.vercel.app/api/whatsapp/ingest",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

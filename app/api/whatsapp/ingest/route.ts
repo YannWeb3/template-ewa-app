@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
   const ok = await insertMessage(msg)
 
   if (!ok) {
+    console.error("Insert failed for message:", msg.waha_message_id)
     return Response.json({ error: "Insert failed" }, { status: 500 })
   }
 

@@ -20,7 +20,7 @@
       "position": [500, 300],
       "parameters": {
         "method": "GET",
-        "url": "http://localhost:3000/api/instagram/accounts-to-audit",
+        "url": "https://template-ewa-app.vercel.app/api/instagram/accounts-to-audit",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -163,7 +163,7 @@
       "position": [2250, 300],
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:3000/api/instagram/ingest",
+        "url": "https://template-ewa-app.vercel.app/api/instagram/ingest",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
