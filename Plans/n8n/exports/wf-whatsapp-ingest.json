@@ -43,12 +43,12 @@
     },
     {
       "id": "11111111-2222-3333-4444-555555555557",
-      "name": "POST /api/whatsapp/ingest",
+      "name": "POST /api/observatoire/ingest",
       "type": "n8n-nodes-base.httpRequest",
       "position": [750, 300],
       "parameters": {
         "method": "POST",
-        "url": "https://template-ewa-app.vercel.app/api/whatsapp/ingest",
+        "url": "https://template-ewa-app.vercel.app/api/observatoire/ingest",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -59,16 +59,21 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "waha_message_id", "value": "={{ $json.waha_message_id }}" },
+            { "name": "message_id", "value": "={{ $json.waha_message_id }}" },
             { "name": "phone", "value": "={{ $json.phone }}" },
             { "name": "push_name", "value": "={{ $json.push_name }}" },
             { "name": "direction", "value": "={{ $json.direction }}" },
             { "name": "body", "value": "={{ $json.body }}" },
+            { "name": "content", "value": "={{ $json.body }}" },
+            { "name": "sender", "value": "={{ $json.push_name }}" },
             { "name": "is_group", "value": "={{ $json.is_group }}" },
             { "name": "group_id", "value": "={{ $json.group_id }}" },
             { "name": "media_type", "value": "={{ $json.media_type }}" },
             { "name": "media_url", "value": "={{ $json.media_url }}" },
-            { "name": "raw_payload", "value": "={{ $json.raw_payload }}" }
+            { "name": "raw_payload", "value": "={{ $json.raw_payload }}" },
+            { "name": "source", "value": "whatsapp" },
+            { "name": "status", "value": "pending" },
+            { "name": "priority", "value": "normal" }
           ]
         },
         "options": {}

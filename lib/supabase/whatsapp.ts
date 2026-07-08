@@ -1,5 +1,5 @@
-import { createClient } from "./server"
 import { createServiceClient } from "./service"
+import { createTemplateServiceClient } from "./template"
 
 export interface WhatsAppMessage {
   waha_message_id: string
@@ -22,7 +22,7 @@ export interface BlacklistEntry {
 }
 
 export async function getBlacklist(): Promise<string[]> {
-  const supabase = await createClient()
+  const supabase = createTemplateServiceClient()
   const { data } = await supabase
     .from("whatsapp_blacklist")
     .select("phone")
@@ -56,19 +56,19 @@ export async function insertMessage(msg: WhatsAppMessage): Promise<boolean> {
 }
 
 export async function addToBlacklist(phone: string, label: string): Promise<boolean> {
-  const supabase = createServiceClient()
+  const supabase = createTemplateServiceClient()
   const { error } = await supabase.from("whatsapp_blacklist").insert({ phone, label })
   return !error
 }
 
 export async function removeFromBlacklist(phone: string): Promise<boolean> {
-  const supabase = createServiceClient()
+  const supabase = createTemplateServiceClient()
   const { error } = await supabase.from("whatsapp_blacklist").delete().eq("phone", phone)
   return !error
 }
 
 export async function listBlacklist(): Promise<BlacklistEntry[]> {
-  const supabase = await createClient()
+  const supabase = createTemplateServiceClient()
   const { data } = await supabase
     .from("whatsapp_blacklist")
     .select("*")
