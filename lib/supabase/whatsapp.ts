@@ -48,6 +48,9 @@ export async function insertMessage(msg: WhatsAppMessage): Promise<boolean> {
     media_url: msg.media_url,
     raw_payload: msg.raw_payload,
   })
+  if (error && error.code === "23505") {
+    return true
+  }
   if (error) console.error("Supabase insert error:", error)
   return !error
 }
