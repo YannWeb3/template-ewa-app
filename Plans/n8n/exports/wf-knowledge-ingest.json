@@ -1,0 +1,113 @@
+{
+  "name": "WF - Knowledge Ingest",
+  "nodes": [
+    {
+      "id": "25111111-2222-3333-4444-555555555551",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [250, 300],
+      "parameters": {},
+      "typeVersion": 1
+    },
+    {
+      "id": "25111111-2222-3333-4444-555555555552",
+      "name": "Read Playbooks from Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "position": [500, 300],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "playbooks",
+        "returnAll": true,
+        "fields": ""
+      },
+      "credentials": {
+        "supabaseApi": { "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID", "name": "Supabase Service Role - Client" }
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "25111111-2222-3333-4444-555555555553",
+      "name": "Categorize with OpenRouter",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [750, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "model", "value": "anthropic/claude-sonnet-4.5" },
+            { "name": "messages", "value": "={{ JSON.stringify([{role:'system', content:'Tu classifies un contenu EWA. Réponds uniquement en JSON avec category, subcategory (max 30 caractères, kebab-case).'}, {role:'user', content: 'Titre : ' + $json.title + '\\n' + $json.content}]) }}" },
+            { "name": "response_format", "value": "json_object" }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TODO_OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "25111111-2222-3333-4444-555555555554",
+      "name": "Parse Categorization",
+      "type": "n8n-nodes-base.code",
+      "position": [1000, 300],
+      "parameters": {
+        "jsCode": "const content = $json.choices?.[0]?.message?.content || '{}';\nlet category = 'manual';\nlet subcategory = 'contenu';\ntry {\n  const parsed = JSON.parse(content);\n  category = parsed.category || 'manual';\n  subcategory = parsed.subcategory || 'contenu';\n} catch (e) {}\nconst items = $items('Read Playbooks from Supabase');\nconst idx = $execution?.itemIndex ?? 0;\nconst item = items[idx]?.json || items[0]?.json || {};\nreturn [{\n  json: {\n    title: item.title,\n    content: item.content,\n    category,\n    subcategory,\n    source: 'manual',\n    metadata: { origin: 'playbook', playbook_id: item.id },\n    original_id: item.id,\n    original_table: 'playbooks'\n  }\n}];"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "25111111-2222-3333-4444-555555555555",
+      "name": "POST /api/knowledge/ingest",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1250, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/knowledge/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-n8n-token", "value": "ewa_wh_sk_2026_xK9mP" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "title", "value": "={{ $json.title }}" },
+            { "name": "content", "value": "={{ $json.content }}" },
+            { "name": "category", "value": "={{ $json.category }}" },
+            { "name": "subcategory", "value": "={{ $json.subcategory }}" },
+            { "name": "source", "value": "={{ $json.source }}" },
+            { "name": "metadata", "value": "={{ JSON.stringify($json.metadata || {}) }}" },
+            { "name": "original_id", "value": "={{ $json.original_id }}" },
+            { "name": "original_table", "value": "={{ $json.original_table }}" }
+          ]
+        },
+        "options": {}
+      },
+      "typeVersion": 4.2
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{"node": "Read Playbooks from Supabase", "type": "main", "index": 0}]] },
+    "Read Playbooks from Supabase": { "main": [[{"node": "Categorize with OpenRouter", "type": "main", "index": 0}]] },
+    "Categorize with OpenRouter": { "main": [[{"node": "Parse Categorization", "type": "main", "index": 0}]] },
+    "Parse Categorization": { "main": [[{"node": "POST /api/knowledge/ingest", "type": "main", "index": 0}]] }
+  },
+  "settings": { "executionOrder": "v1", "errorWorkflow": "" },
+  "staticData": null,
+  "tags": ["ewa", "knowledge", "ingest", "openrouter"]
+}

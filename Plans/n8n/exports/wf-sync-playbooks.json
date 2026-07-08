@@ -1,0 +1,133 @@
+{
+  "name": "WF - Sync Playbooks",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "23111111-2222-3333-4444-555555555551",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [-336, 144],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "jsCode": "// Remplacez par votre source (Notion, Google Docs, Airtable, etc.)\nreturn [\n  {\n    json: {\n      id: '00000000-0000-0000-0000-000000000020',\n      title: 'Contenu pour Maman',\n      content: '... contenu markdown ...',\n      checklist: ['vérifier le hook', 'ajouter CTA'],\n      examples: ['exemple 1', 'exemple 2'],\n      loom_url: 'https://loom.com/...',\n      position: 1\n    }\n  }\n];"
+      },
+      "id": "23111111-2222-3333-4444-555555555552",
+      "name": "Read Playbooks",
+      "type": "n8n-nodes-base.code",
+      "position": [-112, 144],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "playbooks",
+        "filters": {
+          "conditions": [
+            { "keyName": "title", "keyValue": "={{ $json.title }}" }
+          ]
+        }
+      },
+      "id": "23111111-2222-3333-4444-555555555553",
+      "name": "Get Playbook Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "position": [96, 144],
+      "typeVersion": 1,
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": { "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID", "name": "Supabase Service Role - Client" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+          "conditions": [
+            {
+              "id": "if-playbook",
+              "leftValue": "={{ $json.created_at }}",
+              "rightValue": "=",
+              "operator": { "type": "string", "operation": "empty", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [288, 144],
+      "id": "23111111-2222-3333-4444-555555555554",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "tableId": "playbooks",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "title", "fieldValue": "={{ $('Read Playbooks').item.json.title }}" },
+            { "fieldId": "content", "fieldValue": "={{ $('Read Playbooks').item.json.content }}" },
+            { "fieldId": "checklist", "fieldValue": "={{ $('Read Playbooks').item.json.checklist }}" },
+            { "fieldId": "examples", "fieldValue": "={{ $('Read Playbooks').item.json.examples }}" },
+            { "fieldId": "loom_url", "fieldValue": "={{ $('Read Playbooks').item.json.loom_url }}" },
+            { "fieldId": "position", "fieldValue": "={{ $('Read Playbooks').item.json.position }}" }
+          ]
+        }
+      },
+      "id": "23111111-2222-3333-4444-555555555555",
+      "name": "Create Playbook",
+      "type": "n8n-nodes-base.supabase",
+      "position": [672, 16],
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": { "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID", "name": "Supabase Service Role - Client" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "playbooks",
+        "filters": {
+          "conditions": [
+            { "keyName": "title", "condition": "eq", "keyValue": "={{ $('Read Playbooks').item.json.title }}" }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "title", "fieldValue": "={{ $('Read Playbooks').item.json.title }}" },
+            { "fieldId": "content", "fieldValue": "={{ $('Read Playbooks').item.json.content }}" },
+            { "fieldId": "checklist", "fieldValue": "={{ $('Read Playbooks').item.json.checklist }}" },
+            { "fieldId": "examples", "fieldValue": "={{ $('Read Playbooks').item.json.examples }}" },
+            { "fieldId": "loom_url", "fieldValue": "={{ $('Read Playbooks').item.json.loom_url }}" },
+            { "fieldId": "position", "fieldValue": "={{ $('Read Playbooks').item.json.position }}" }
+          ]
+        }
+      },
+      "id": "23111111-2222-3333-4444-555555555556",
+      "name": "Update Playbook",
+      "type": "n8n-nodes-base.supabase",
+      "position": [672, 288],
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": { "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID", "name": "Supabase Service Role - Client" }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{"node": "Read Playbooks", "type": "main", "index": 0}]] },
+    "Read Playbooks": { "main": [[{"node": "Get Playbook Supabase", "type": "main", "index": 0}]] },
+    "Get Playbook Supabase": { "main": [[{"node": "If", "type": "main", "index": 0}]] },
+    "If": {
+      "main": [
+        [{"node": "Create Playbook", "type": "main", "index": 0}],
+        [{"node": "Update Playbook", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1a35879ae87e93b4eda7853fa43024346dc2571fbecb1bfaa0f41fed0645b29b"
+  }
+}

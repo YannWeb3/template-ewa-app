@@ -1,0 +1,111 @@
+{
+  "name": "WF - WhatsApp Ingest",
+  "nodes": [
+    {
+      "id": "11111111-2222-3333-4444-555555555555",
+      "name": "Webhook WAHA",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300],
+      "webhookId": "waha-to-ewa",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "waha-to-ewa",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "typeVersion": 2,
+      "disabled": false
+    },
+    {
+      "id": "11111111-2222-3333-4444-555555555556",
+      "name": "Build Payload",
+      "type": "n8n-nodes-base.set",
+      "position": [500, 300],
+      "parameters": {
+        "mode": "manual",
+        "manualOptions": {
+          "values": [
+            { "name": "waha_message_id", "value": "={{ $json.body?.id || $json.payload?.id }}" },
+            { "name": "phone", "value": "={{ $json.body?.from || $json.payload?.from }}" },
+            { "name": "push_name", "value": "={{ $json.body?.pushName || $json.payload?.pushName || '' }}" },
+            { "name": "direction", "value": "INBOUND" },
+            { "name": "body", "value": "={{ $json.body?.text || $json.body?.body || $json.payload?.text || '' }}" },
+            { "name": "is_group", "value": "={{ Boolean($json.body?.isGroup || $json.payload?.isGroup) }}" },
+            { "name": "group_id", "value": "={{ $json.body?.groupId || $json.payload?.groupId || '' }}" },
+            { "name": "media_type", "value": "={{ $json.body?.mediaType || $json.payload?.mediaType || '' }}" },
+            { "name": "media_url", "value": "={{ $json.body?.mediaUrl || $json.payload?.mediaUrl || '' }}" },
+            { "name": "raw_payload", "value": "={{ JSON.stringify($json) }}" }
+          ]
+        },
+        "includeOtherFields": false
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "11111111-2222-3333-4444-555555555557",
+      "name": "POST /api/whatsapp/ingest",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [750, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/whatsapp/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-n8n-token", "value": "ewa_wh_sk_2026_xK9mP" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "waha_message_id", "value": "={{ $json.waha_message_id }}" },
+            { "name": "phone", "value": "={{ $json.phone }}" },
+            { "name": "push_name", "value": "={{ $json.push_name }}" },
+            { "name": "direction", "value": "={{ $json.direction }}" },
+            { "name": "body", "value": "={{ $json.body }}" },
+            { "name": "is_group", "value": "={{ $json.is_group }}" },
+            { "name": "group_id", "value": "={{ $json.group_id }}" },
+            { "name": "media_type", "value": "={{ $json.media_type }}" },
+            { "name": "media_url", "value": "={{ $json.media_url }}" },
+            { "name": "raw_payload", "value": "={{ $json.raw_payload }}" }
+          ]
+        },
+        "options": {}
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "11111111-2222-3333-4444-555555555558",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.webhook",
+      "position": [1000, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "waha-to-ewa",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "typeVersion": 2,
+      "webhookId": "waha-to-ewa-response",
+      "disabled": false
+    }
+  ],
+  "connections": {
+    "Webhook WAHA": {
+      "main": [[{"node": "Build Payload", "type": "main", "index": 0}]]
+    },
+    "Build Payload": {
+      "main": [[{"node": "POST /api/whatsapp/ingest", "type": "main", "index": 0}]]
+    },
+    "POST /api/whatsapp/ingest": {
+      "main": [[{"node": "Webhook Response", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["ewa", "whatsapp", "ingest"]
+}

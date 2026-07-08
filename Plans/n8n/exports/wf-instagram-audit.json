@@ -1,0 +1,201 @@
+{
+  "name": "WF - Instagram Audit",
+  "nodes": [
+    {
+      "id": "24111111-2222-3333-4444-555555555551",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 24 }]
+        }
+      },
+      "typeVersion": 1.2
+    },
+    {
+      "id": "24111111-2222-3333-4444-555555555552",
+      "name": "GET accounts-to-audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [500, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:3000/api/instagram/accounts-to-audit",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-n8n-token", "value": "ewa_wh_sk_2026_xK9mP" }
+          ]
+        },
+        "options": {}
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "24111111-2222-3333-4444-555555555553",
+      "name": "Apify Instagram Scraper",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [750, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/apify~instagram-profile-scraper/runs",
+        "authentication": "genericCredentialType",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "usernames", "value": "={{ JSON.stringify($json.accounts || $json) }}" }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TODO_APIFY_CREDENTIAL_ID",
+          "name": "Apify API"
+        }
+      },
+      "typeVersion": 4.2,
+      "notes": "TODO: adapter au format de l'acteur Apify utilisé. Créer un credential httpHeaderAuth avec Authorization: Bearer <token>"
+    },
+    {
+      "id": "24111111-2222-3333-4444-555555555554",
+      "name": "Wait For Apify Results",
+      "type": "n8n-nodes-base.wait",
+      "position": [1000, 300],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "typeVersion": 1.2
+    },
+    {
+      "id": "24111111-2222-3333-4444-555555555555",
+      "name": "Fetch Apify Dataset",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1250, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.data?.defaultDatasetId ? 'https://api.apify.com/v2/datasets/' + $json.data.defaultDatasetId + '/items' : 'https://api.apify.com/v2/actor-runs/' + $json.data?.id + '/dataset/items' }}",
+        "authentication": "genericCredentialType",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [] },
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TODO_APIFY_CREDENTIAL_ID",
+          "name": "Apify API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "24111111-2222-3333-4444-555555555556",
+      "name": "Build Audit Prompt",
+      "type": "n8n-nodes-base.set",
+      "position": [1500, 300],
+      "parameters": {
+        "mode": "manual",
+        "manualOptions": {
+          "values": [
+            { "name": "account", "value": "={{ JSON.stringify($json) }}" },
+            { "name": "posts", "value": "={{ JSON.stringify($json.posts || $json.latestPosts || []) }}" },
+            { "name": "systemPrompt", "value": "Tu es un expert Instagram. Analyse ce profil et ses 12 derniers posts. Donne : forces (3), faiblesses (3), 5 recommandations concrètes, score global /100. Réponds en JSON avec les clés content, strengths, weaknesses, recommendations, score." }
+          ]
+        }
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "24111111-2222-3333-4444-555555555557",
+      "name": "OpenRouter Audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1750, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "model", "value": "anthropic/claude-sonnet-4.5" },
+            { "name": "messages", "value": "={{ JSON.stringify([{role:'system', content: $json.systemPrompt}, {role:'user', content: 'Profil : ' + $json.account + '\\nPosts : ' + $json.posts}]) }}" },
+            { "name": "response_format", "value": "json_object" }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TODO_OPENROUTER_CREDENTIAL_ID",
+          "name": "OpenRouter API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "24111111-2222-3333-4444-555555555558",
+      "name": "Parse Audit",
+      "type": "n8n-nodes-base.code",
+      "position": [2000, 300],
+      "parameters": {
+        "jsCode": "const message = $json.choices?.[0]?.message?.content || '{}';\nlet audit;\ntry { audit = JSON.parse(message); } catch { audit = { content: message, strengths: [], weaknesses: [], recommendations: [], score: null }; }\nconst buildNode = $items('Build Audit Prompt')[0]?.json || {};\nreturn [{ json: { account: typeof buildNode.account === 'string' ? JSON.parse(buildNode.account) : buildNode.account, posts: typeof buildNode.posts === 'string' ? JSON.parse(buildNode.posts) : buildNode.posts, audit, model: 'anthropic/claude-sonnet-4.5' } }];"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "24111111-2222-3333-4444-555555555559",
+      "name": "POST /api/instagram/ingest",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2250, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/instagram/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-n8n-token", "value": "ewa_wh_sk_2026_xK9mP" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "account", "value": "={{ JSON.stringify($json.account) }}" },
+            { "name": "posts", "value": "={{ JSON.stringify($json.posts) }}" },
+            { "name": "audit", "value": "={{ JSON.stringify($json.audit) }}" },
+            { "name": "model", "value": "={{ $json.model }}" }
+          ]
+        },
+        "options": {}
+      },
+      "typeVersion": 4.2
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{"node": "GET accounts-to-audit", "type": "main", "index": 0}]] },
+    "GET accounts-to-audit": { "main": [[{"node": "Apify Instagram Scraper", "type": "main", "index": 0}]] },
+    "Apify Instagram Scraper": { "main": [[{"node": "Wait For Apify Results", "type": "main", "index": 0}]] },
+    "Wait For Apify Results": { "main": [[{"node": "Fetch Apify Dataset", "type": "main", "index": 0}]] },
+    "Fetch Apify Dataset": { "main": [[{"node": "Build Audit Prompt", "type": "main", "index": 0}]] },
+    "Build Audit Prompt": { "main": [[{"node": "OpenRouter Audit", "type": "main", "index": 0}]] },
+    "OpenRouter Audit": { "main": [[{"node": "Parse Audit", "type": "main", "index": 0}]] },
+    "Parse Audit": { "main": [[{"node": "POST /api/instagram/ingest", "type": "main", "index": 0}]] }
+  },
+  "settings": { "executionOrder": "v1", "errorWorkflow": "" },
+  "staticData": null,
+  "tags": ["ewa", "instagram", "audit", "apify", "openrouter"]
+}

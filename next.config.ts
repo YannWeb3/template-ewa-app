@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  turbopack: {
+    root: "C:\\Users\\Kmia\\Vs Code\\template-ewa-app",
+  },
 };
 
 export default nextConfig;

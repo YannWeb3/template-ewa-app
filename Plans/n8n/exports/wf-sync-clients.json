@@ -1,0 +1,160 @@
+{
+  "name": "WF - Sync Clients",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "62fb2ce3-145e-40dc-8169-556eab598fd6",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [-336, 144],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "jsCode": "// Remplacez par votre source (Airtable, Google Sheets, CSV, webhook...).\n// Exemple statique :\nreturn [\n  {\n    json: {\n      id: '00000000-0000-0000-0000-000000000001',\n      name: 'Marie Dupont',\n      phone: '33612345678',\n      email: 'marie@example.com',\n      instagram_url: 'https://instagram.com/mariedp',\n      status: 'active',\n      source: 'manual',\n      tags: ['fitness', 'coaching']\n    }\n  }\n];"
+      },
+      "id": "d7f288dd-d723-44ac-a6e9-5c52adbed4be",
+      "name": "Read Source1",
+      "type": "n8n-nodes-base.code",
+      "position": [-112, 144],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "clients",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "name",
+              "keyValue": "={{ $json.name }}"
+            }
+          ]
+        }
+      },
+      "id": "720a250d-0c3b-49a8-abe1-3bf8c57b2897",
+      "name": "Get Client Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "position": [96, 144],
+      "typeVersion": 1,
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID",
+          "name": "Supabase Service Role - Client"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5b2bb276-b323-4a82-b45f-8ec3936a3840",
+              "leftValue": "={{ $json.created_at }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [288, 144],
+      "id": "ea364715-6c04-4255-984d-e359aa1d7060",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "tableId": "clients",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "name", "fieldValue": "={{ $('Read Source1').item.json.name }}" },
+            { "fieldId": "phone", "fieldValue": "={{ $('Read Source1').item.json.phone }}" },
+            { "fieldId": "email", "fieldValue": "={{ $('Read Source1').item.json.email }}" },
+            { "fieldId": "instagram", "fieldValue": "={{ $('Read Source1').item.json.instagram_url }}" },
+            { "fieldId": "status", "fieldValue": "={{ $('Read Source1').item.json.status }}" },
+            { "fieldId": "source", "fieldValue": "={{ $('Read Source1').item.json.source }}" },
+            { "fieldId": "tags", "fieldValue": "={{ $('Read Source1').item.json.tags }}" }
+          ]
+        }
+      },
+      "id": "f928807d-03b7-453c-a08e-5b458487702a",
+      "name": "Create Client Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "position": [672, 16],
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID",
+          "name": "Supabase Service Role - Client"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "clients",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "name",
+              "condition": "eq",
+              "keyValue": "={{ $('Read Source1').item.json.name }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "name", "fieldValue": "={{ $('Read Source1').item.json.name }}" },
+            { "fieldId": "phone", "fieldValue": "={{ $('Read Source1').item.json.phone }}" },
+            { "fieldId": "email", "fieldValue": "={{ $('Read Source1').item.json.email }}" },
+            { "fieldId": "instagram", "fieldValue": "={{ $('Read Source1').item.json.instagram_url }}" },
+            { "fieldId": "status", "fieldValue": "={{ $('Read Source1').item.json.status }}" },
+            { "fieldId": "source", "fieldValue": "={{ $('Read Source1').item.json.source }}" },
+            { "fieldId": "tags", "fieldValue": "={{ $('Read Source1').item.json.tags }}" }
+          ]
+        }
+      },
+      "id": "cfab885a-d45e-4ac6-830c-e2a692ac0e5b",
+      "name": "Update Client Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "position": [672, 288],
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": {
+          "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID",
+          "name": "Supabase Service Role - Client"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{"node": "Read Source1", "type": "main", "index": 0}]] },
+    "Read Source1": { "main": [[{"node": "Get Client Supabase", "type": "main", "index": 0}]] },
+    "Get Client Supabase": { "main": [[{"node": "If", "type": "main", "index": 0}]] },
+    "If": {
+      "main": [
+        [{"node": "Create Client Supabase", "type": "main", "index": 0}],
+        [{"node": "Update Client Supabase", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1a35879ae87e93b4eda7853fa43024346dc2571fbecb1bfaa0f41fed0645b29b"
+  }
+}

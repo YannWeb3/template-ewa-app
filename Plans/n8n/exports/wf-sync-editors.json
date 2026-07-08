@@ -1,0 +1,229 @@
+{
+  "name": "WF - Sync Editors",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "22111111-2222-3333-4444-555555555551",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [-336, 300],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "jsCode": "// Remplacez par votre source réelle (Google Sheets, Notion, etc.)\nreturn [\n  {\n    json: {\n      editor: {\n        id: '00000000-0000-0000-0000-000000000010',\n        name: 'Jean Martin',\n        email: 'jean@ewa.fr',\n        skills: ['capcut', 'sound-design'],\n        status: 'active'\n      },\n      profile: {\n        id: '00000000-0000-0000-0000-000000000011',\n        editor_id: '00000000-0000-0000-0000-000000000010',\n        role: 'editor',\n        hide_financials: false\n      }\n    }\n  }\n];"
+      },
+      "id": "22111111-2222-3333-4444-555555555552",
+      "name": "Read Editors Source",
+      "type": "n8n-nodes-base.code",
+      "position": [-112, 300],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "editors",
+        "filters": {
+          "conditions": [
+            { "keyName": "name", "keyValue": "={{ $json.editor.name }}" }
+          ]
+        }
+      },
+      "id": "22111111-2222-3333-4444-555555555553",
+      "name": "Get Editor Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "position": [96, 220],
+      "typeVersion": 1,
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": { "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID", "name": "Supabase Service Role - Client" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "profiles",
+        "filters": {
+          "conditions": [
+            { "keyName": "editor_id", "keyValue": "={{ $json.editor.id }}" }
+          ]
+        }
+      },
+      "id": "22111111-2222-3333-4444-555555555554",
+      "name": "Get Profile Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "position": [96, 420],
+      "typeVersion": 1,
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": { "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID", "name": "Supabase Service Role - Client" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+          "conditions": [
+            {
+              "id": "if-editor",
+              "leftValue": "={{ $json.created_at }}",
+              "rightValue": "=",
+              "operator": { "type": "string", "operation": "empty", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [288, 220],
+      "id": "22111111-2222-3333-4444-555555555555",
+      "name": "If Editor"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+          "conditions": [
+            {
+              "id": "if-profile",
+              "leftValue": "={{ $json.created_at }}",
+              "rightValue": "=",
+              "operator": { "type": "string", "operation": "empty", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [288, 420],
+      "id": "22111111-2222-3333-4444-555555555556",
+      "name": "If Profile"
+    },
+    {
+      "parameters": {
+        "tableId": "editors",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "name", "fieldValue": "={{ $('Read Editors Source').item.json.editor.name }}" },
+            { "fieldId": "email", "fieldValue": "={{ $('Read Editors Source').item.json.editor.email }}" },
+            { "fieldId": "skills", "fieldValue": "={{ $('Read Editors Source').item.json.editor.skills }}" },
+            { "fieldId": "status", "fieldValue": "={{ $('Read Editors Source').item.json.editor.status }}" }
+          ]
+        }
+      },
+      "id": "22111111-2222-3333-4444-555555555557",
+      "name": "Create Editor",
+      "type": "n8n-nodes-base.supabase",
+      "position": [672, 100],
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": { "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID", "name": "Supabase Service Role - Client" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "editors",
+        "filters": {
+          "conditions": [
+            { "keyName": "name", "condition": "eq", "keyValue": "={{ $('Read Editors Source').item.json.editor.name }}" }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "name", "fieldValue": "={{ $('Read Editors Source').item.json.editor.name }}" },
+            { "fieldId": "email", "fieldValue": "={{ $('Read Editors Source').item.json.editor.email }}" },
+            { "fieldId": "skills", "fieldValue": "={{ $('Read Editors Source').item.json.editor.skills }}" },
+            { "fieldId": "status", "fieldValue": "={{ $('Read Editors Source').item.json.editor.status }}" }
+          ]
+        }
+      },
+      "id": "22111111-2222-3333-4444-555555555558",
+      "name": "Update Editor",
+      "type": "n8n-nodes-base.supabase",
+      "position": [672, 340],
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": { "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID", "name": "Supabase Service Role - Client" }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "profiles",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "editor_id", "fieldValue": "={{ $('Read Editors Source').item.json.profile.editor_id }}" },
+            { "fieldId": "role", "fieldValue": "={{ $('Read Editors Source').item.json.profile.role }}" },
+            { "fieldId": "hide_financials", "fieldValue": "={{ $('Read Editors Source').item.json.profile.hide_financials }}" }
+          ]
+        }
+      },
+      "id": "22111111-2222-3333-4444-555555555559",
+      "name": "Create Profile",
+      "type": "n8n-nodes-base.supabase",
+      "position": [672, 500],
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": { "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID", "name": "Supabase Service Role - Client" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "profiles",
+        "filters": {
+          "conditions": [
+            { "keyName": "editor_id", "condition": "eq", "keyValue": "={{ $('Read Editors Source').item.json.profile.editor_id }}" }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "editor_id", "fieldValue": "={{ $('Read Editors Source').item.json.profile.editor_id }}" },
+            { "fieldId": "role", "fieldValue": "={{ $('Read Editors Source').item.json.profile.role }}" },
+            { "fieldId": "hide_financials", "fieldValue": "={{ $('Read Editors Source').item.json.profile.hide_financials }}" }
+          ]
+        }
+      },
+      "id": "22111111-2222-3333-4444-555555555560",
+      "name": "Update Profile",
+      "type": "n8n-nodes-base.supabase",
+      "position": [672, 700],
+      "typeVersion": 1,
+      "credentials": {
+        "supabaseApi": { "id": "TODO_SERVICE_ROLE_CREDENTIAL_ID", "name": "Supabase Service Role - Client" }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{"node": "Read Editors Source", "type": "main", "index": 0}]] },
+    "Read Editors Source": {
+      "main": [
+        [{"node": "Get Editor Supabase", "type": "main", "index": 0}],
+        [{"node": "Get Profile Supabase", "type": "main", "index": 0}]
+      ]
+    },
+    "Get Editor Supabase": { "main": [[{"node": "If Editor", "type": "main", "index": 0}]] },
+    "Get Profile Supabase": { "main": [[{"node": "If Profile", "type": "main", "index": 0}]] },
+    "If Editor": {
+      "main": [
+        [{"node": "Create Editor", "type": "main", "index": 0}],
+        [{"node": "Update Editor", "type": "main", "index": 0}]
+      ]
+    },
+    "If Profile": {
+      "main": [
+        [{"node": "Create Profile", "type": "main", "index": 0}],
+        [{"node": "Update Profile", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1a35879ae87e93b4eda7853fa43024346dc2571fbecb1bfaa0f41fed0645b29b"
+  }
+}
